@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Compressor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Variables for color scheme */
+        :root {
+            --bg-color-light: #f0f2f5; /* Light gray background */
+            --bg-color-medium: #ffffff; /* White for sections */
+            --bg-color-dark: #e0f2f7; /* Light blue for drag area */
+            --text-color-primary: #1f2937; /* Dark gray */
+            --text-color-secondary: #4b5563; /* Medium gray */
+            --text-color-accent: #4169e1; /* Royal Blue */
+            --border-color-light: #e5e7eb; /* Light gray border */
+            --border-color-accent: #6495ed; /* Cornflower Blue */
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --footer-bg: #1f2937; /* Dark gray for footer */
+            --footer-text: #e2e8f0; /* Light gray for footer text */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color-light);
+            color: var(--text-color-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        header {
+            background-color: var(--bg-color-medium);
+            box-shadow: 0 1px 2px var(--shadow-color);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        header h1 {
+            color: var(--text-color-primary);
+        }
+        header nav a {
+            color: var(--text-color-secondary);
+        }
+        header nav a:hover {
+            color: var(--text-color-accent);
+        }
+
+        main section {
+            background-color: var(--bg-color-medium);
+            box-shadow: 0 4px 6px var(--shadow-color);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        main section h2 {
+            color: var(--text-color-primary);
+        }
+        main section p {
+            color: var(--text-color-secondary);
+        }
+
+        .drag-area {
+            border: 2px dashed var(--border-color-accent);
+            background-color: var(--bg-color-dark);
+            transition: all 0.3s ease;
+        }
+        .drag-area.active {
+            border-color: var(--text-color-accent);
+            background-color: var(--bg-color-dark);
+        }
+        .drag-area p, .drag-area span {
+            color: var(--text-color-secondary);
+        }
+        .drag-area svg {
+            color: var(--text-color-accent);
+        }
+        /* Hover effect for drag area */
+        .drag-area:hover {
+            border-color: var(--text-color-accent);
+            background-color: #e6f7ff;
+        }
+
+        .results {
+            background-color: var(--bg-color-dark);
+            box-shadow: inset 0 2px 4px var(--shadow-color);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .results h3 {
+            color: var(--text-color-primary);
+        }
+        .results h4 {
+            color: var(--text-color-secondary);
+        }
+        .results p {
+            color: var(--text-color-secondary);
+        }
+        .results .bg-purple-100 { /* This class name is a remnant, but its styles are overridden below */
+            background-color: #e0f2f7;
+            box-shadow: inset 0 2px 4px var(--shadow-color);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .results .text-purple-800 { /* This class name is a remnant, but its styles are overridden below */
+            color: var(--text-color-primary);
+        }
+        
+        /* Modern Slider Styles */
+        input[type="range"] {
+            -webkit-appearance: none; /* Remove default styling */
+            width: 100%;
+            height: 8px; /* Thicker track */
+            background: var(--border-color-light); /* Light track color */
+            border-radius: 5px;
+            outline: none;
+            transition: background 0.2s ease;
+            margin-top: 10px; /* Add some space */
+        }
+
+        /* Slider Track */
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color-light);
+            border-radius: 5px;
+            transition: background 0.2s ease;
+        }
+        input[type="range"]::-moz-range-track {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color-light);
+            border-radius: 5px;
+            transition: background 0.2s ease;
+        }
+        input[type="range"]::-ms-track {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color-light);
+            border-radius: 5px;
+            transition: background 0.2s ease;
+        }
+
+        /* Slider Thumb */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px; /* Larger thumb */
+            height: 20px; /* Larger thumb */
+            background: var(--text-color-accent); /* Royal Blue thumb */
+            border-radius: 50%; /* Circular thumb */
+            cursor: grab;
+            margin-top: -6px; /* Center thumb vertically on track */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+            transition: background 0.2s ease, box-shadow 0.2s ease;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--text-color-accent);
+            border-radius: 50%;
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background 0.2s ease, box-shadow 0.2s ease;
+        }
+        input[type="range"]::-ms-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--text-color-accent);
+            border-radius: 50%;
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        /* Thumb active state */
+        input[type="range"]:active::-webkit-slider-thumb {
+            cursor: grabbing;
+            box-shadow: 0 0 0 5px rgba(65, 105, 225, 0.3); /* Royal Blue ring on active */
+        }
+        input[type="range"]:active::-moz-range-thumb {
+            cursor: grabbing;
+            box-shadow: 0 0 0 5px rgba(65, 105, 225, 0.3);
+        }
+        input[type="range"]:active::-ms-thumb {
+            cursor: grabbing;
+            box-shadow: 0 0 0 5px rgba(65, 105, 225, 0.3);
+        }
+
+
+        .faq-item {
+            border-bottom: 1px solid var(--border-color-light);
+            transition: border-color 0.3s ease;
+        }
+        .faq-question {
+            cursor: pointer;
+            color: var(--text-color-secondary);
+            transition: background-color 0.2s ease, color 0.3s ease;
+        }
+        .faq-question:hover {
+            background-color: var(--border-color-light);
+        }
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            color: var(--text-color-secondary);
+        }
+        .faq-answer.open {
+            max-height: 200px;
+            transition: max-height 0.5s ease-in;
+        }
+
+        /* Message Box */
+        #message-box > div {
+            background-color: var(--bg-color-medium);
+            box-shadow: 0 10px 15px var(--shadow-color);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        #message-content {
+            color: var(--text-color-primary);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--footer-bg);
+            color: var(--footer-text);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        footer .text-red-500 {
+            color: #ef4444;
+        }
+
+        /* Specific button colors that were hardcoded with purple */
+        #select-file-btn {
+            background-color: #4169e1; /* Royal Blue */
+        }
+        #select-file-btn:hover {
+            background-color: #3658c1; /* Darker Royal Blue */
+        }
+        #select-file-btn:focus {
+            box-shadow: 0 0 0 2px rgba(65, 105, 225, 0.5); /* Royal Blue ring */
+        }
+        #message-box-close {
+            background-color: #4169e1; /* Royal Blue */
+        }
+        #message-box-close:hover {
+            background-color: #3658c1; /* Darker Royal Blue */
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <header class="bg-white shadow-sm py-4">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <h1 class="text-3xl font-bold">Photo Compressor</h1>
+            <nav class="flex items-center space-x-6">
+                <ul class="flex space-x-6">
+                    <li><a href="#compressor" class="hover:text-purple-600 transition duration-300">Compress</a></li>
+                    <li><a href="#faqs" class="hover:text-purple-600 transition duration-300">FAQs</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8" id="compressor">
+        <section class="bg-white p-8 rounded-xl shadow-lg mb-8">
+            <h2 class="text-2xl font-semibold mb-6 text-center">Compress Your Photos Instantly</h2>
+            <p class="text-center mb-8">Drag & drop your image or click to upload. We'll optimize it for the web while maintaining quality.</p>
+
+            <div id="drag-area" class="drag-area flex flex-col items-center justify-center p-12 rounded-lg border-2 border-dashed text-gray-500 transition duration-300 ease-in-out cursor-pointer">
+                <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                <p class="text-lg font-medium mb-2">Drag & Drop your image here</p>
+                <span class="text-sm">or</span>
+                <button id="select-file-btn" class="mt-4 px-6 py-3 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-opacity-75 transition duration-300">Browse Files</button>
+                <input type="file" id="file-input" accept="image/*" class="hidden">
+            </div>
+
+            <div id="results" class="mt-8 hidden p-6 rounded-lg shadow-inner">
+                <h3 class="text-xl font-semibold mb-4 text-center">Compression Results</h3>
+                
+                <div class="mb-8 p-4 rounded-lg shadow-inner text-center">
+                    <label for="quality-slider" class="block text-lg font-medium mb-2">Adjust Quality: <span id="quality-value" class="font-bold">70%</span></label>
+                    <input type="range" id="quality-slider" min="10" max="100" value="70" class="w-full h-2 rounded-lg appearance-none cursor-pointer">
+                    <p class="text-sm mt-2">Lower quality means smaller file size, but more compression artifacts.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-lg font-medium mb-2">Original Image:</h4>
+                        <img id="original-image" src="#" alt="Original Image" class="max-w-full h-auto rounded-lg shadow-md mb-4">
+                        <p>Original Size: <span id="original-size" class="font-semibold"></span></p>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-medium mb-2">Compressed Image:</h4>
+                        <img id="compressed-image" src="#" alt="Compressed Image" class="max-w-full h-auto rounded-lg shadow-md mb-4">
+                        <p>Compressed Size: <span id="compressed-size" class="font-semibold"></span></p>
+                        <p>Reduction: <span id="reduction-percentage" class="font-semibold text-green-600"></span></p>
+                        <a id="download-link" href="#" download="compressed_image.jpg" class="mt-4 inline-block px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 transition duration-300">Download Compressed Image</a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="message-box" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden z-50">
+                <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+                    <p id="message-content" class="text-lg font-medium mb-4"></p>
+                    <button id="message-box-close" class="px-5 py-2 text-white rounded-md transition duration-300">OK</button>
+                </div>
+            </div>
+
+        </section>
+
+        <section id="faqs" class="bg-white p-8 rounded-xl shadow-lg">
+            <h2 class="text-2xl font-semibold mb-6 text-center">Frequently Asked Questions</h2>
+
+            <div class="space-y-4">
+                <div class="faq-item rounded-lg overflow-hidden">
+                    <div class="faq-question p-5 flex justify-between items-center font-medium">
+                        <span>What types of images can I compress?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="faq-answer px-5 pb-5">
+                        <p>You can compress common image formats such as JPEG, PNG, and WebP. Our tool is optimized for web-friendly image compression.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item rounded-lg overflow-hidden">
+                    <div class="faq-question p-5 flex justify-between items-center font-medium">
+                        <span>How much quality will I lose?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="faq-answer px-5 pb-5">
+                        <p>Our compressor uses intelligent algorithms to reduce file size with minimal noticeable loss in visual quality. You can often achieve significant reductions without compromising the image's appearance.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item rounded-lg overflow-hidden">
+                    <div class="faq-question p-5 flex justify-between items-center font-medium">
+                        <span>Is my data safe and private?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="faq-answer px-5 pb-5">
+                        <p>Yes, absolutely. All image processing happens directly in your browser. Your images are never uploaded to our servers, ensuring complete privacy and security.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item rounded-lg overflow-hidden">
+                    <div class="faq-question p-5 flex justify-between items-center font-medium">
+                        <span>What is the maximum file size I can upload?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="faq-answer px-5 pb-5">
+                        <p>While there's no strict server-side limit as processing is client-side, extremely large files might take longer to process and could consume more browser memory. We recommend images under 20MB for optimal performance.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6 mt-8">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2025 Photo Compressor. All rights reserved.</p>
+            <p class="text-sm mt-2">Designed with <span class="text-red-500">&hearts;</span> for efficient image optimization.</p>
+        </div>
+    </footer>
+
+    <script>
+        // DOM Elements
+        const dragArea = document.getElementById('drag-area');
+        const fileInput = document.getElementById('file-input');
+        const selectFileBtn = document.getElementById('select-file-btn');
+        const resultsDiv = document.getElementById('results');
+        const originalImage = document.getElementById('original-image');
+        const compressedImage = document.getElementById('compressed-image');
+        const originalSizeSpan = document.getElementById('original-size');
+        const compressedSizeSpan = document.getElementById('compressed-size');
+        const reductionPercentageSpan = document.getElementById('reduction-percentage');
+        const downloadLink = document.getElementById('download-link');
+        const messageBox = document.getElementById('message-box');
+        const messageContent = document.getElementById('message-content');
+        const messageBoxClose = document.getElementById('message-box-close');
+
+        // New DOM elements for quality slider
+        const qualitySlider = document.getElementById('quality-slider');
+        const qualityValueSpan = document.getElementById('quality-value');
+
+        // Variable to store the currently loaded file for re-compression
+        let currentFile = null;
+
+        // Function to show custom message box
+        function showMessageBox(message) {
+            messageContent.textContent = message;
+            messageBox.classList.remove('hidden');
+        }
+
+        // Close message box
+        messageBoxClose.addEventListener('click', () => {
+            messageBox.classList.add('hidden');
+        });
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dragArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false); // Global prevention
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Highlight drag area when a file is dragged over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dragArea.addEventListener(eventName, () => dragArea.classList.add('active'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dragArea.addEventListener(eventName, () => dragArea.classList.remove('active'), false);
+        });
+
+        // Handle dropped files
+        dragArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        // Handle file selection via button click
+        selectFileBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        // Process selected/dropped files
+        function handleFiles(files) {
+            if (files.length === 0) {
+                showMessageBox('No file selected.');
+                return;
+            }
+            const file = files[0];
+            if (!file.type.startsWith('image/')) {
+                showMessageBox('Please upload an image file (e.g., JPEG, PNG, GIF).');
+                return;
+            }
+
+            currentFile = file; // Store the file
+            compressImage(currentFile);
+        }
+
+        // Image Compression Logic
+        function compressImage(file) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file); // Read the file as a data URL
+
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result; // Set the image source to the loaded data URL
+
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    // Set canvas dimensions to original image dimensions
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+
+                    // Draw the image onto the canvas
+                    ctx.drawImage(img, 0, 0);
+
+                    // Get the compression quality from the slider (convert to a 0.0-1.0 scale)
+                    const compressionQuality = parseFloat(qualitySlider.value) / 100;
+
+                    // Get the compressed image data URL (JPEG format, dynamic quality)
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', compressionQuality);
+
+                    // Display original and compressed images
+                    originalImage.src = event.target.result;
+                    compressedImage.src = compressedDataUrl;
+
+                    // Calculate and display sizes
+                    const originalSize = file.size; // Size in bytes
+                    // Approximate size for base64: (dataUrl.length * 0.75) - 2 for "==" padding
+                    const compressedSize = (compressedDataUrl.length * 0.75) - 2;
+                    const reduction = ((originalSize - compressedSize) / originalSize) * 100;
+
+                    originalSizeSpan.textContent = formatBytes(originalSize);
+                    compressedSizeSpan.textContent = formatBytes(compressedSize);
+                    reductionPercentageSpan.textContent = `${reduction.toFixed(2)}%`;
+
+                    // Set download link
+                    downloadLink.href = compressedDataUrl;
+                    downloadLink.download = `compressed_${file.name.split('.').slice(0, -1).join('.')}_q${qualitySlider.value}.jpg`;
+
+                    resultsDiv.classList.remove('hidden'); // Show results section
+                };
+
+                img.onerror = () => {
+                    showMessageBox('Could not load image. Please try a different file.');
+                };
+            };
+
+            reader.onerror = () => {
+                showMessageBox('Error reading file. Please try again.');
+            };
+        }
+
+        // Helper function to format bytes into human-readable format
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        // Event listener for quality slider
+        qualitySlider.addEventListener('input', () => {
+            qualityValueSpan.textContent = `${qualitySlider.value}%`;
+            // If an image is already loaded, re-compress it with the new quality
+            if (currentFile) {
+                compressImage(currentFile);
+            }
+        });
+
+        // FAQ Accordion functionality
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const answer = question.nextElementSibling;
+                const icon = question.querySelector('svg');
+
+                // Toggle the 'open' class for the answer
+                answer.classList.toggle('open');
+                // Toggle rotation for the SVG icon
+                icon.classList.toggle('rotate-180');
+
+                // Close other open FAQ items (optional, but good for UX)
+                document.querySelectorAll('.faq-answer.open').forEach(otherAnswer => {
+                    if (otherAnswer !== answer) {
+                        otherAnswer.classList.remove('open');
+                        otherAnswer.previousElementSibling.querySelector('svg').classList.remove('rotate-180');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
